@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Администратор — Логика 1–4</title>
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/fonts.css?v=4">
+<link rel="stylesheet" href="../assets/css/style.css?v=4">
+<link rel="stylesheet" href="../assets/css/site.css?v=4">
+</head>
+<body>
+<header class="topbar"><div class="in"><a class="brand" href="../index.html"><span>Логика <i>1–4</i> · админ</span></a><a class="acclink" href="../account/index.html">👤 Мой аккаунт</a></div></header>
+<main class="page" id="view"><p class="mute">…</p></main>
+<script>window.NO_PREMIUM = true;</script>
+<script src="../assets/js/core.js?v=4"></script>
+<script src="../assets/js/taskkit.js?v=4"></script>
+<script src="../assets/js/config.js?v=4"></script>
+<script src="../assets/vendor/supabase.js?v=4"></script>
+<script src="../assets/js/auth.js?v=4"></script>
+<script>
+/* Панель администратора: найти пользователя → выдать/продлить доступ, сбросить устройства,
+   задать новый пароль, создать коды доступа. Все действия проверяются на сервере (lg_is_admin). */
+const v = $("#view");
+const PLANS = [["month", "Месяц"], ["year", "Год"], ["forever", "Навсегда"]];
+const d = x => x ? new Date(x).toLocaleDateString("ru-RU") : "—";
+async function call(fn, args) { const { data, error } = await ACCESS.sb.rpc(fn, args); if (error) { toast("Ошибка: " + error.message, 5000); throw error; } return data; }
+
+async function render() {
+  if (!ACCESS.session) { v.innerHTML = `<div class="card"><p>Сначала войдите в свой аккаунт.</p><div class="btns"><a class="btn y" href="../account/index.html">Войти</a></div></div>`; return; }
+  if (!ACCESS.status?.is_admin) {
+    v.innerHTML = `<div class="card"><h3>Нет прав администратора</h3><p class="mute">Если администратора ещё нет, первый вошедший может стать им.</p><div class="btns"><button class="btn y claim" type="button">Сделать меня администратором</button></div></div>`;
+    $(".claim").onclick = async () => { const r = await call("lg_claim_admin", {}); toast(r.ok ? "Готово — вы администратор." : "Администратор уже назначен."); setTimeout(() => location.reload(), 1200); };
+    return;
+  }
+  v.innerHTML = `<h2>Заявки на оплату <span class="pill pend">…</span></h2>
+    <p class="mute">Сверьте перевод в Kaspi по фамилии и имени и сумме. Оплата пришла — нажмите «Включить доступ».</p>
+    <div class="chips rstat" style="margin:10px 0"><button data-s="pending" class="on">Ждут проверки</button><button data-s="approved">Одобренные</button><button data-s="rejected">Отклонённые</button><button data-s="">Все</button></div>
+    <div class="card" style="overflow:auto"><table class="admintab reqs"><thead><tr><th>№ / дата</th><th>Фамилия и имя</th><th>Тариф</th><th>Сумма</th><th>Действия</th></tr></thead><tbody></tbody></table></div>
+    <h2 style="margin-top:30px">Промокоды</h2>
+    <div class="card"><div class="row" style="align-items:flex-end">
+      <label>Код<input class="namein pcode" placeholder="SEMINAR" style="min-width:140px;width:150px"></label>
+      <label>Тариф<select class="sel pkind"><option value="teacher">Учитель</option><option value="family">Семья</option></select></label>
+      <label>Срок<select class="sel pplan"><option value="year">Год</option><option value="month">Месяц</option><option value="forever">Навсегда</option></select></label>
+      <label>Цена, ₸<input class="namein pprice" type="number" value="1990" style="min-width:0;width:110px"></label>
+      <label>Сколько раз<input class="namein pmax" type="number" placeholder="без огранич." style="min-width:0;width:130px"></label>
+      <label>Действует до<input class="namein pexp" type="date" style="min-width:0;width:170px"></label>
+      <button class="btn y psave" type="button">Сохранить промокод</button></div></div>
+    <div class="card" style="overflow:auto;margin-top:10px"><table class="admintab promos"><thead><tr><th>Код</th><th>Что даёт</th><th>Цена</th><th>Ограничения</th><th>Использование</th><th></th></tr></thead><tbody></tbody></table></div>
+    <h2 style="margin-top:30px">Пользователи</h2>
+    <div class="card row" style="margin:12px 0"><input class="namein q" placeholder="e-mail, имя или телефон" style="flex:1"><button class="btn y find" type="button">Найти</button><button class="btn sm all" type="button">Все</button></div>
+    <div class="card" style="overflow:auto"><table class="admintab users"><thead><tr><th>Пользователь</th><th>Доступ</th><th>Устройства</th><th>Действия</th></tr></thead><tbody></tbody></table></div>
+    <h2 style="margin-top:30px">Коды доступа</h2>
+    <div class="card row"><select class="sel cplan">${PLANS.map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select>
+      <select class="sel ckind"><option value="family">Семья (2 устр.)</option><option value="teacher">Учитель (3 устр.)</option></select>
+      <input class="namein ccount" type="number" min="1" max="100" value="5" style="width:90px;min-width:0"><button class="btn y mk" type="button">Создать коды</button></div>
+    <pre class="card codes" style="white-space:pre-wrap;font-size:16px;display:none"></pre>
+    <div class="card upbox" style="margin-top:30px;display:none"><h3>Платные задания</h3><p class="mute">На этом компьютере есть новая сборка заданий (dist_premium/premium.js).</p><div class="btns"><button class="btn y up" type="button">⬆ Загрузить задания в хранилище</button></div></div>`;
+  // кнопка видна только при запуске с компьютера разработчика, где лежит свежая сборка
+  fetch("../../dist_premium/premium.js", { cache: "no-store" }).then(r => r.ok ? r.blob() : null).then(blob => {
+    if (!blob || blob.size < 10000) return;
+    const box = $(".upbox", v); box.style.display = "block";
+    $(".up", box).onclick = async () => {
+      const { error } = await ACCESS.sb.storage.from("lg-premium").upload("premium.js", blob, { upsert: true, contentType: "text/javascript" });
+      if (error) return toast("Ошибка загрузки: " + error.message, 6000);
+      toast("Задания загружены (" + Math.round(blob.size / 1024) + " КБ)."); box.querySelector("p").textContent = "Загружено: " + new Date().toLocaleString("ru-RU");
+    };
+  }).catch(() => {});
+  const tb = $(".users tbody", v);
+  async function load(q) {
+    const rows = await call("lg_admin_users", { p_q: q || "" });
+    tb.innerHTML = rows.map(u => `<tr data-u="${u.user_id}"><td><b>${u.email}</b><br>${u.name || ""} ${u.phone ? "· " + u.phone : ""}<br><span class="mute">с ${d(u.created_at)}</span></td>
+      <td>${u.active ? `<b style="color:var(--green)">${u.kind === "teacher" ? "Учитель" : "Семья"} · ${u.ends_at ? "до " + d(u.ends_at) : "навсегда"}</b>` : `<span class="mute">нет</span>`}</td>
+      <td>${u.devices} ${u.last_seen ? `<br><span class="mute">был(а): ${d(u.last_seen)}</span>` : ""}</td>
+      <td><div class="btns">${PLANS.map(([k, n]) => `<button class="btn sm g" data-a="grant" data-p="${k}" type="button">+ ${n}</button>`).join("")}
+        <select class="sel kind" style="padding:4px;font-size:13px"><option value="family" ${u.kind !== "teacher" ? "selected" : ""}>семья</option><option value="teacher" ${u.kind === "teacher" ? "selected" : ""}>учитель</option></select></div>
+        <div class="btns" style="margin-top:4px"><button class="btn sm" data-a="devices" type="button">Сбросить устройства</button><button class="btn sm" data-a="pass" type="button">Новый пароль</button><button class="btn sm dk" data-a="revoke" type="button">Закрыть доступ</button></div></td></tr>`).join("") || `<tr><td colspan="4" class="mute">Никого не найдено</td></tr>`;
+  }
+  tb.addEventListener("click", async e => {
+    const b = e.target.closest("button[data-a]"); if (!b) return;
+    const tr = b.closest("tr"), uid = tr.dataset.u, kind = $(".kind", tr).value;
+    if (b.dataset.a === "grant") { await call("lg_admin_grant", { p_user: uid, p_plan: b.dataset.p, p_kind: kind }); toast("Доступ выдан."); }
+    if (b.dataset.a === "revoke") { if (!confirm("Закрыть доступ этому пользователю?")) return; await call("lg_admin_revoke", { p_user: uid }); toast("Доступ закрыт."); }
+    if (b.dataset.a === "devices") { await call("lg_admin_reset_devices", { p_user: uid }); toast("Устройства сброшены — пользователь может войти заново."); }
+    if (b.dataset.a === "pass") { const p = prompt("Новый пароль (минимум 8 символов):"); if (!p || p.length < 8) return toast("Пароль слишком короткий."); await call("lg_admin_set_password", { p_user: uid, p_pass: p }); toast("Пароль изменён. Сообщите его пользователю.", 4000); }
+    load($(".q", v).value);
+  });
+  $(".find", v).onclick = () => load($(".q", v).value);
+  $(".all", v).onclick = () => { $(".q", v).value = ""; load(""); };
+  $(".q", v).onkeydown = e => { if (e.key === "Enter") load(e.target.value); };
+  $(".mk", v).onclick = async () => {
+    const codes = await call("lg_admin_make_codes", { p_plan: $(".cplan", v).value, p_kind: $(".ckind", v).value, p_count: +$(".ccount", v).value || 1 });
+    const pre = $(".codes", v); pre.style.display = "block"; pre.textContent = codes.join("\n");
+  };
+  load("");
+  // ---- заявки ----
+  let rst = "pending";
+  const rtb = $(".reqs tbody", v);
+  const PN = { month: "Месяц", year: "Год", forever: "Навсегда" }, KN = { family: "Семья", teacher: "Учитель" };
+  async function loadReqs() {
+    const rows = await call("lg_admin_requests", { p_status: rst });
+    const pend = rst === "pending" ? rows.length : (await call("lg_admin_requests", { p_status: "pending" })).length;
+    $(".pend", v).textContent = pend ? pend + " ждут" : "нет новых";
+    rtb.innerHTML = rows.map(q => `<tr data-id="${q.id}"><td><b>№${q.id}</b><br><span class="mute">${new Date(q.created_at).toLocaleString("ru-RU")}</span></td>
+      <td><b style="font-size:17px">${q.full_name}</b><br>${q.phone || ""}<br><span class="mute">${q.email}</span></td>
+      <td>${KN[q.kind]} · ${PN[q.plan]}${q.promo ? `<br><span class="pill" style="font-size:12px">промокод ${q.promo}</span>` : ""}</td>
+      <td><b style="font-size:20px">${q.price.toLocaleString("ru-RU")} ₸</b></td>
+      <td>${q.status === "pending" ? `<div class="btns"><button class="btn sm g" data-a="ok" type="button">✓ Оплата пришла — включить</button><button class="btn sm dk" data-a="no" type="button">✗ Отклонить</button></div>` : `<span class="mute">${{ approved: "одобрена", rejected: "отклонена", cancelled: "заменена" }[q.status]}${q.decided_at ? " · " + new Date(q.decided_at).toLocaleDateString("ru-RU") : ""}${q.admin_note ? "<br>" + q.admin_note : ""}</span>`}</td></tr>`).join("") || `<tr><td colspan="5" class="mute">Заявок нет</td></tr>`;
+  }
+  $(".rstat", v).onclick = e => { const b = e.target.closest("button"); if (!b) return; rst = b.dataset.s; $$(".rstat button", v).forEach(x => x.classList.toggle("on", x === b)); loadReqs(); };
+  rtb.addEventListener("click", async e => {
+    const b = e.target.closest("button[data-a]"); if (!b) return; const id = +b.closest("tr").dataset.id;
+    if (b.dataset.a === "ok") { if (!confirm(`Оплата по заявке №${id} пришла? Доступ включится сразу.`)) return; await call("lg_admin_decide", { p_id: id, p_approve: true, p_note: null }); toast("Доступ включён."); }
+    else { const note = prompt("Причина (увидит пользователь):", "Оплата не найдена"); if (note === null) return; await call("lg_admin_decide", { p_id: id, p_approve: false, p_note: note }); toast("Заявка отклонена."); }
+    loadReqs(); load($(".q", v).value);
+  });
+  loadReqs(); setInterval(loadReqs, 60000);
+  // ---- промокоды ----
+  const ptb = $(".promos tbody", v);
+  async function loadPromos() {
+    const rows = await call("lg_admin_promos", {});
+    ptb.innerHTML = rows.map(p => `<tr data-c="${p.code}"><td><b style="font-size:18px">${p.code}</b></td><td>${KN[p.kind]} · ${PN[p.plan]}</td><td><b>${p.price.toLocaleString("ru-RU")} ₸</b></td>
+      <td>${p.max_uses ? "до " + p.max_uses + " раз" : "без ограничения"}${p.expires_at ? "<br>до " + new Date(p.expires_at).toLocaleDateString("ru-RU") : ""}</td>
+      <td>одобрено: ${p.approved}<br>ждут: ${p.pending}</td>
+      <td><button class="btn sm ${p.active ? "dk" : "g"}" data-a="toggle" type="button">${p.active ? "Выключить" : "Включить"}</button></td></tr>`).join("") || `<tr><td colspan="6" class="mute">Промокодов пока нет</td></tr>`;
+    ptb._rows = rows;
+  }
+  $(".psave", v).onclick = async () => {
+    const code = $(".pcode", v).value.trim(); if (code.length < 3) return toast("Код — минимум 3 символа.");
+    const exp = $(".pexp", v).value;
+    await call("lg_admin_save_promo", { p_code: code, p_plan: $(".pplan", v).value, p_kind: $(".pkind", v).value, p_price: +$(".pprice", v).value || 0,
+      p_max_uses: +$(".pmax", v).value || null, p_expires: exp ? exp + "T23:59:59+05:00" : null, p_active: true, p_note: null });
+    toast("Промокод сохранён."); loadPromos();
+  };
+  ptb.addEventListener("click", async e => {
+    const b = e.target.closest("button[data-a]"); if (!b) return; const p = ptb._rows.find(x => x.code === b.closest("tr").dataset.c);
+    await call("lg_admin_save_promo", { p_code: p.code, p_plan: p.plan, p_kind: p.kind, p_price: p.price, p_max_uses: p.max_uses, p_expires: p.expires_at, p_active: !p.active, p_note: p.note });
+    loadPromos();
+  });
+  loadPromos();
+}
+(async () => { initLang(); try { await Promise.race([accessInit(), sleep(8000)]); } catch (e) { console.warn(e); } render(); })();
+</script>
+</body>
+</html>

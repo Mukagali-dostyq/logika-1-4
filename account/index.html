@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Аккаунт — Логика 1–4</title>
+<meta name="description" content="Вход, регистрация и подписка на полный доступ к порталу «Логика 1–4».">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/css/fonts.css?v=4">
+<link rel="stylesheet" href="../assets/css/style.css?v=4">
+<link rel="stylesheet" href="../assets/css/site.css?v=4">
+</head>
+<body>
+<header class="topbar"><div class="in">
+  <a class="brand" href="../index.html"><span>Логика <i>1–4</i></span></a>
+  <nav class="gpills"><a href="../1/index.html">1</a><a href="../2/index.html">2</a><a href="../3/index.html">3</a><a href="../4/index.html">4</a></nav>
+  <div class="lang-switch"><button data-l="ru">RU</button><button data-l="kz">ҚАЗ</button></div>
+</div></header>
+<main class="page" id="view"><p class="mute">…</p></main>
+<footer><div class="in"><div><b>Логика 1–4</b></div><div><a href="../terms.html"><span class="ru">Условия</span><span class="kz">Шарттар</span></a> · <a href="../privacy.html"><span class="ru">Конфиденциальность</span><span class="kz">Құпиялылық</span></a></div></div></footer>
+<script>window.NO_PREMIUM = true;</script>
+<script src="../assets/js/core.js?v=4"></script>
+<script src="../assets/js/taskkit.js?v=4"></script>
+<script src="../assets/js/config.js?v=4"></script>
+<script src="../assets/vendor/supabase.js?v=4"></script>
+<script src="../assets/js/auth.js?v=4"></script>
+<script>
+  (async () => {
+    initLang();
+    try { await Promise.race([accessInit(), sleep(8000)]); } catch (e) { console.warn(e); }
+    viewAccount($("#view"));
+  })();
+</script>
+</body>
+</html>
