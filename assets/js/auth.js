@@ -217,8 +217,8 @@ function loginForms(box) {
       <label>${L("Промокод (если есть — например, с семинара)", "Промокод (бар болса — мысалы, семинардан)")}<input class="namein" name="promo" maxlength="30"></label>
       <div class="chips kindc"><button type="button" data-k="family" class="on">${T(KIND_NAME.family)}</button><button type="button" data-k="teacher">${T(KIND_NAME.teacher)}</button></div>
       <label class="agree"><input type="checkbox" name="agree" required> ${L('Согласен(на) с <a href="../terms.html" target="_blank">условиями</a> и <a href="../privacy.html" target="_blank">политикой конфиденциальности</a>', '<a href="../terms.html" target="_blank">Шарттармен</a> және <a href="../privacy.html" target="_blank">құпиялылық саясатымен</a> келісемін')}</label>
-      <button class="btn y" type="submit">${L("Создать аккаунт", "Аккаунт ашу")}</button></form></div>
-    <section class="sec"><h3>${L("Тарифы", "Тарифтер")}</h3>${plansHTML("")}</section>`));
+      <button class="btn y" type="submit">${L("Создать аккаунт", "Аккаунт ашу")}</button></form></div>`));
+  box.append(el(`<section class="sec"><h3>${L("Тарифы", "Тарифтер")}</h3>${plansHTML("")}</section>`));
   let kind = "family";
   $(".kindc", box).onclick = e => { const b = e.target.closest("button"); if (!b) return; kind = b.dataset.k; $$(".kindc button", box).forEach(x => x.classList.toggle("on", x === b)); };
   $(".lf", box).onsubmit = async e => {
