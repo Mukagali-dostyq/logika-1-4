@@ -3,7 +3,7 @@
    ПРОИГРЫВАТЕЛЬ ЗАДАНИЯ — карточка «условие → действие → проверка».
    После ошибки: конкретное объяснение → подсказка → новая попытка → разбор по шагам.
    Режимы: train (тренировка), learn (учимся), test (проверочная — без подсказок),
-           board (интерактивная доска — крупно), demo (для презентации).
+           board (интерактивная доска — крупно), demo (показ у доски).
    ===================================================================== */
 
 const LEVEL_DOTS = l => `<span class="lvl" title="сложность">${[1, 2, 3].map(i => `<i class="${i <= l ? "on" : ""}"></i>`).join("")}</span>`;
@@ -14,7 +14,7 @@ function playTask(o) {
   const { type, grade, level = 1, mode = "train", host } = o;
   const seed = o.seed ?? newSeed();
   const def = TASKS[type];
-  const task = o.task ? { ...o.task, type, seed, grade, level } : makeTask(type, seed, grade, level); // o.task — готовая задача (для презентации)
+  const task = o.task ? { ...o.task, type, seed, grade, level } : makeTask(type, seed, grade, level); // o.task — готовая задача (для показа)
   const card = el(`<div class="task mode-${mode}">
     <div class="thead">
       <div class="tmeta"><span class="tdir">${T(DIRS[def.dir]?.title || def.title)}</span><span class="ttitle">${T(def.title)}</span>${LEVEL_DOTS(level)}${o.num ? `<span class="tnum">№ ${o.num}</span>` : ""}</div>

@@ -18,14 +18,14 @@ const LG_CONFIG = {
 
   // цены в тенге — поменяйте на свои
   PRICES: {
-    family: { month: 1990, year: 14990, forever: 29990 },
-    teacher: { month: 2990, year: 19990, forever: 39990 },
+    family: { month: 990, year: 9990, forever: 16990 },
+    teacher: { month: 990, year: 9990, forever: 16990 },
   },
 
   // куда платить вручную (Kaspi) и куда присылать чек
   PAY: {
-    kaspi_phone: "",   // например "+7 707 123 45 67"
-    receiver: "",      // имя получателя, как в Kaspi
-    whatsapp: "",      // номер для чеков, например "77071234567"
+    kaspi_phone: "+7 771 885 83 11",
+    receiver: "Мұқағали З.",
+    whatsapp: "77718858311",
   },
 };
