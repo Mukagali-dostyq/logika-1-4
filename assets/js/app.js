@@ -37,7 +37,7 @@ function header() {
     <a class="brand" href="../index.html">${LOGO}<span>Логика <i>1–4</i></span></a>
     <nav class="gpills">${[1, 2, 3, 4].map(g => `<a href="../${g}/index.html" class="${g === GRADE ? "on" : ""}" title="${g} класс">${g}</a>`).join("")}</nav>
     <nav class="tabs">${TABS.map(([r, n]) => `<a href="#/${r}" data-r="${r}">${T(n)}</a>`).join("")}</nav>
-    <a class="acclink" href="../account/index.html">${ACCESS.premium ? "✓ " + L("Полный доступ", "Толық қолжетімділік") : ACCESS.session ? "👤 " + L("Аккаунт", "Аккаунт") : "🔑 " + L("Войти", "Кіру")}</a>
+    ${LG_CONFIG.OPEN_ACCESS ? "" : `<a class="acclink" href="../account/index.html">${ACCESS.premium ? "✓ " + L("Полный доступ", "Толық қолжетімділік") : ACCESS.session ? "👤 " + L("Аккаунт", "Аккаунт") : "🔑 " + L("Войти", "Кіру")}</a>`}
     <div class="lang-switch"><button data-l="ru">RU</button><button data-l="kz">ҚАЗ</button></div></div></header>`);
   document.body.prepend(h);
 }

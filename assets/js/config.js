@@ -5,6 +5,10 @@
    Ключ «anon» публичный по замыслу Supabase: он ничего не открывает без входа в аккаунт.
    ===================================================================== */
 const LG_CONFIG = {
+  // true — всё открыто без входа: платные задания лежат на сайте, аккаунт и Supabase не нужны.
+  // false — платная версия (вход, подписка, задания из закрытого хранилища Supabase).
+  OPEN_ACCESS: true,
+
   SUPABASE_URL: "https://berhrwckwojqwugcjxhq.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlcmhyd2Nrd29qcXd1Z2NqeGhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDQzNTAsImV4cCI6MjEwNjg4MDM1MH0.5idp9zm773EXw7P9vjkAVTcrgB8nngm7SSUF1w-Gdn4",
 

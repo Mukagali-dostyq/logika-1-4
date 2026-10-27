@@ -36,6 +36,10 @@ const isOpen = (type, level = 1) => openLevel(type) >= level;
 /* запуск: восстановить вход, зарегистрировать устройство, загрузить платные задания */
 async function accessInit() {
   const q = new URLSearchParams(location.search);
+  if (LG_CONFIG.OPEN_ACCESS) { // открытый режим: все задания на сайте, без входа
+    for (const f of window.DEV_PREMIUM || []) await loadScript(f);
+    ACCESS.premium = Object.values(TASKS).every(t => t.gen); return;
+  }
   if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && q.get("dev") === "1" && window.DEV_PREMIUM) {
     for (const f of window.DEV_PREMIUM) await loadScript(f); // локальная проверка без сервера
     ACCESS.premium = true; ACCESS.dev = true; return;
