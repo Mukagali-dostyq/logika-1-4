@@ -275,7 +275,7 @@ function testResult(v) {
 const olyPool = () => OLYMP_POOL.filter(t => G.topics.includes(t) && isOpen(t) && TASKS[t] && !TASKS[t].stub);
 const OLY_STEPS = [tx("Читаю", "Оқимын"), tx("Выписываю данные", "Деректі жазамын"), tx("Понимаю вопрос", "Сұрақты түсінемін"), tx("Составляю план", "Жоспар құрамын"), tx("Решаю по действиям", "Әрекетпен шешемін")];
 function olyBand() {
-  return el(`<section class="olyband"><div class="ob-l"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиадная подготовка", "Олимпиадаға дайындық")}</span>${L("«Бастау» · «Алтын сақа» · «Ақбота»", "«Бастау» · «Алтын сақа» · «Ақбота»")}</div>
+  return el(`<section class="olyband"><div class="ob-l"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиадная подготовка", "Олимпиадаға дайындық")}</span>${L("к любой олимпиаде — через мышление, а не через заучивание", "кез келген олимпиадаға — жаттау арқылы емес, ойлау арқылы")}</div>
     <h2>${L("Контекстные задачи", "Контекстік есептер")} <span class="hand">${L("по порядку", "ретімен")}</span></h2>
     <div class="obsteps">${OLY_STEPS.map((s, i) => `<span><b>${i + 1}</b>${T(s)}</span>`).join("<i>→</i>")}</div></div>
     <div class="btns"><a class="btn y" href="#/olymp">${L("Открыть раздел", "Бөлімді ашу")} →</a></div></section>`);
@@ -285,17 +285,17 @@ function viewOlymp(v, [sub]) {
   if (!pool.length || !OPEN_TOPICS().includes("ctx")) return lockedView(v, "ctx");
   if (sub === "au") return olyAu(v, pool);
   if (sub === "kokpar") return olyKokpar(v, pool);
-  v.append(el(`<section class="olyhero"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиада", "Олимпиада")}</span>${L(`${GRADE} класс · задачи в духе республиканских олимпиад`, `${GRADE} сынып · республикалық олимпиадалар үлгісіндегі есептер`)}</div>
+  v.append(el(`<section class="olyhero"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиада", "Олимпиада")}</span>${L(`${GRADE} класс · олимпиадные задачи любого вида`, `${GRADE} сынып · кез келген түрдегі олимпиадалық есептер`)}</div>
     <h2>${L("Готовимся к", "Олимпиадаға")} <span class="hand u">${L("олимпиадам", "дайындаламыз")}</span></h2>
     <p class="lead">${L("Олимпиадная задача — это маленькая история. Побеждает не тот, кто быстрее считает, а тот, кто внимательно читает, видит лишние данные и решает по порядку.", "Олимпиадалық есеп — кішкентай оқиға. Тез санайтын емес, мұқият оқып, артық деректі көріп, ретімен шешетін жеңеді.")}</p>
     <div class="obsteps big">${OLY_STEPS.map((s, i) => `<span><b>${i + 1}</b>${T(s)}</span>`).join("<i>→</i>")}</div></section>`));
   v.append(el(`<section class="sec"><h3>${L("Учимся решать", "Шешуді үйренеміз")}</h3><div class="grid auto">${OLYMP_TOPICS.filter(t => G.topics.includes(t)).map(t => topicCard(t)).join("")}</div></section>`));
-  v.append(el(`<section class="sec"><h3>${L("Играем как на олимпиаде «Бастау»", "«Бастау» олимпиадасындағыдай ойнаймыз")}</h3><div class="grid g3 olymodes">
+  v.append(el(`<section class="sec"><h3>${L("Олимпиадные игры", "Олимпиадалық ойындар")}</h3><div class="grid g3 olymodes">
     <a class="card omode" href="#/olymp/au"><div class="om-i">🎯</div><h3>«Әу, баста!»</h3><p>${L("3 темы × 6 задач стоимостью 10–60 баллов. Бонус за строку и за всю тему.", "3 тақырып × 6 есеп, құны 10–60 ұпай. Жол мен бүкіл тақырыпқа бонус.")}</p></a>
     <a class="card omode" href="#/olymp/kokpar"><div class="om-i">🐎</div><h3>«Көкпар»</h3><p>${L("15 задач, на руках всегда 3. Две попытки. Верно подряд — цена растёт.", "15 есеп, қолда әрдайым 3. Екі әрекет. Қатарынан дұрыс — құны өседі.")}</p></a>
     <a class="card omode" href="#/test/olymp"><div class="om-i">📝</div><h3>${L("Пробник", "Сынақ")}</h3><p>${L("Смешанная проверочная из олимпиадных тем — без подсказок, с разбором в конце.", "Олимпиадалық тақырыптардан аралас тексеру — кеңессіз, соңында талдау.")}</p></a></div>
-    <p class="mute" style="margin-top:10px">${L("Задания не копируют реальные олимпиады — они составлены по тем же типам задач. Устный тур «Байга» тренируем кнопкой «Разбор»: ребёнок рассказывает решение вслух по шагам.", "Тапсырмалар нақты олимпиаданы көшірмейді — сол есеп түрлері бойынша құрастырылған. Ауызша «Бәйге» турын «Талдау» батырмасымен жаттықтырамыз: бала шешімді қадамдап дауыстап айтады.")}</p></section>`));
-  v.append(el(`<section class="sec"><h3>${L("Олимпиады для начальной школы Казахстана", "Қазақстандағы бастауыш мектеп олимпиадалары")}</h3><div class="grid g2 olylist">${OLYMPIADS.map(o => `<div class="card flat"><b class="disp">${o.name}</b><div class="mute">${T(o.who)}</div><p>${T(o.what)}</p></div>`).join("")}</div></section>`));
+    <p class="mute" style="margin-top:10px">${L("Мы не готовим к одной олимпиаде и не заучиваем чужие задания. Мы развиваем логическое мышление — и тогда незнакомая задача на любой олимпиаде становится понятной. Объяснять решение вслух учит кнопка «Разбор».", "Біз бір олимпиадаға дайындамаймыз және бөтен тапсырмаларды жаттамаймыз. Біз логикалық ойлауды дамытамыз — сонда кез келген олимпиададағы таныс емес есеп те түсінікті болады. Шешімді дауыстап түсіндіруге «Талдау» батырмасы үйретеді.")}</p></section>`));
+  v.append(el(`<section class="sec"><h3>${L("Что встречается на любой олимпиаде — и всё это есть в курсе", "Кез келген олимпиадада не кездеседі — бәрі курста бар")}</h3><div class="grid g3 olylist">${OLY_TYPES.map(o => `<div class="card flat"><div class="om-i" style="font-size:30px">${o.i}</div><b class="disp">${T(o.t)}</b><p class="mute">${T(o.d)}</p></div>`).join("")}</div></section>`));
 }
 const auLevel = c => (c <= 20 ? 1 : c <= 40 ? 2 : 3);
 function olyAu(v, pool) {
