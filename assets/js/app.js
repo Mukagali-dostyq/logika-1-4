@@ -31,7 +31,7 @@ const PROG = {
 const STATUS = { new: tx("не начато", "басталмаған"), work: tx("в процессе", "үйреніп жатыр"), done: tx("освоено", "меңгерілді") };
 
 /* ---------------- шапка ---------------- */
-const TABS = [["", tx("Главная", "Басты бет")], ["learn", tx("Учимся", "Үйренеміз")], ["train", tx("Тренируемся", "Жаттығамыз")], ["bank", tx("Банк задач", "Есептер банкі")], ["test", tx("Проверочная", "Тексеру жұмысы")], ["results", tx("Мои результаты", "Нәтижелерім")], ["board", tx("Доска", "Тақта")], ["print", tx("Печать", "Басып шығару")]];
+const TABS = [["", tx("Главная", "Басты бет")], ["learn", tx("Учимся", "Үйренеміз")], ["train", tx("Тренируемся", "Жаттығамыз")], ["bank", tx("Банк задач", "Есептер банкі")], ["test", tx("Проверочная", "Тексеру жұмысы")], ["olymp", tx("🏆 Олимпиада", "🏆 Олимпиада")],["results", tx("Мои результаты", "Нәтижелерім")], ["board", tx("Доска", "Тақта")], ["print", tx("Печать", "Басып шығару")]];
 function header() {
   const h = el(`<header class="topbar"><div class="in">
     <a class="brand" href="../index.html">${LOGO}<span>Логика <i>1–4</i></span></a>
@@ -53,7 +53,7 @@ function route() {
   $$(".tabs a").forEach(a => a.classList.toggle("on", a.dataset.r === r));
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   const v = main(); v.innerHTML = ""; window.scrollTo(0, 0);
-  ({ "": viewHome, learn: viewLearn, train: viewTrain, bank: viewBank, test: viewTest, results: viewResults, board: viewBoard, print: viewPrint }[r] || viewHome)(v, parts.slice(1));
+  ({ "": viewHome, learn: viewLearn, train: viewTrain, bank: viewBank, test: viewTest, olymp: viewOlymp, results: viewResults, board: viewBoard, print: viewPrint }[r] || viewHome)(v, parts.slice(1));
 }
 const go = h => { if (location.hash === h) route(); else location.hash = h; };
 
@@ -92,6 +92,7 @@ function viewHome(v) {
     ${ACCESS.premium ? "" : `<div class="freenote">🔓 ${L(`Бесплатно открыто: ${OPEN_TOPICS().length} из ${G.topics.length} тем, лёгкий уровень. <a href="../account/index.html">Полный доступ →</a>`, `Тегін ашық: ${G.topics.length}-ден ${OPEN_TOPICS().length} тақырып, жеңіл деңгей. <a href="../account/index.html">Толық қолжетімділік →</a>`)}</div>`}
     <div class="gstat">${name ? `<b>${name}</b> · ` : ""}${L(`освоено тем: <b>${done}</b> из ${G.topics.length}`, `меңгерілген тақырып: ${G.topics.length}-ден <b>${done}</b>`)}<div class="bar"><i style="width:${(100 * done) / G.topics.length}%"></i></div></div>
   </div></section>`));
+  if (OPEN_TOPICS().includes("ctx")) v.append(olyBand());
   const map = el(`<section class="sec"><h2>${L("Карта тем", "Тақырыптар картасы")} <span class="hand" style="color:var(--g2)">${L("выбирай!", "таңда!")}</span></h2><div class="dirmap"></div></section>`);
   byDirs(G.topics).forEach(([dir, ts]) => $(".dirmap", map).append(el(`<div class="dirblock"><div class="dirh" style="--dc:${DIRS[dir].color}"><b>${DIRS[dir].n}</b>${T(DIRS[dir].title)}</div><div class="grid auto">${ts.map(t => topicCard(t)).join("")}</div></div>`)));
   v.append(map);
@@ -215,13 +216,14 @@ function viewTest(v, [sub]) {
   const card = el(`<section><div class="eyebrow"><span class="tag">${L("Проверочная работа", "Тексеру жұмысы")}</span>${L("без подсказок · одна попытка · разбор после", "кеңессіз · бір әрекет · талдау соңында")}</div>
     <h2>${L("Проверь", "Өзіңді")} <span class="hand u">${L("себя", "тексер")}</span></h2>
     <div class="card testcfg">
-      <div><div class="k">${L("Тема", "Тақырып")}</div><select class="sel" data-k="topic"><option value="">${L("Смешанная: все темы", "Аралас: барлық тақырып")}</option>${OPEN_TOPICS().map(t => `<option value="${t}">${TASKS[t].title.ru} / ${TASKS[t].title.kz}</option>`).join("")}</select></div>
+      <div><div class="k">${L("Тема", "Тақырып")}</div><select class="sel" data-k="topic"><option value="">${L("Смешанная: все темы", "Аралас: барлық тақырып")}</option>${olyPool().length ? `<option value="olymp">🏆 Олимпиадный пробник / Олимпиадалық сынақ</option>` : ""}${OPEN_TOPICS().map(t => `<option value="${t}">${TASKS[t].title.ru} / ${TASKS[t].title.kz}</option>`).join("")}</select></div>
       <div><div class="k">${L("Сколько заданий", "Неше тапсырма")}</div><div class="chips" data-k="n">${[5, 10, 15].map(n => `<button data-v="${n}">${n}</button>`).join("")}</div></div>
       <div><div class="k">${L("Сложность", "Қиындық")}</div><div class="chips" data-k="lvl"><button data-v="0">${L("по нарастающей", "біртіндеп өседі")}</button>${[1, 2, 3].map(l => `<button data-v="${l}">${T(LVL_NAME[l])}</button>`).join("")}</div></div>
       <div><div class="k">${L("Время", "Уақыт")}</div><div class="chips" data-k="time"><button data-v="0">${L("без таймера", "таймерсіз")}</button>${[10, 20, 30].map(m => `<button data-v="${m}">${m} ${L("мин", "мин")}</button>`).join("")}</div></div>
       <div class="btns"><button class="btn y startb" type="button">▶ ${L("Начать", "Бастау")}</button></div></div></section>`);
   v.append(card);
-  const sel = $("select", card); if (!OPEN_TOPICS().includes(s.topic)) s.topic = ""; sel.value = s.topic;
+  if (sub === "olymp") { s.topic = "olymp"; s.lvl = 0; }
+  const sel = $("select", card); if (!OPEN_TOPICS().includes(s.topic) && !(s.topic === "olymp" && olyPool().length)) s.topic = ""; sel.value = s.topic;
   if (!ACCESS.premium) { s.lvl = LG_CONFIG.FREE_LEVEL; $$('[data-k="lvl"] button', card).forEach(b => { if (+b.dataset.v !== LG_CONFIG.FREE_LEVEL) b.disabled = true; }); }
   const draw = () => $$(".chips", card).forEach(c => $$("button", c).forEach(b => b.classList.toggle("on", String(s[c.dataset.k]) === b.dataset.v)));
   draw();
@@ -230,7 +232,8 @@ function viewTest(v, [sub]) {
   $(".startb", card).onclick = () => {
     store.set("testcfg" + GRADE, s);
     const R = new Rnd(newSeed());
-    const types = s.topic ? range(s.n).map(() => s.topic) : (() => { const a = []; let pool = R.shuffle(OPEN_TOPICS()); while (a.length < s.n) { if (!pool.length) pool = R.shuffle(OPEN_TOPICS()); a.push(pool.pop()); } return a; })();
+    const src = s.topic === "olymp" ? olyPool() : OPEN_TOPICS();
+    const types = s.topic && s.topic !== "olymp" ? range(s.n).map(() => s.topic) : (() => { const a = []; let pool = R.shuffle(src); while (a.length < s.n) { if (!pool.length) pool = R.shuffle(src); a.push(pool.pop()); } return a; })();
     TEST = { cfg: { ...s }, items: types.map((t, k) => ({ type: t, seed: newSeed(), level: capLevel(t, s.lvl || (k < s.n / 3 ? 1 : k < (2 * s.n) / 3 ? 2 : 3)), ok: null })), i: 0, start: Date.now(), done: false };
     go("#/test/run");
   };
@@ -267,6 +270,100 @@ function testResult(v) {
   wrap.addEventListener("click", e => { const b = e.target.closest(".trv"); if (!b) return; const it = TEST.items[+b.dataset.k]; const p = playTask({ type: it.type, seed: it.seed, grade: GRADE, level: it.level, mode: "train", host: $(".host", wrap), allowNew: false }); p.solve(); $(".host", wrap).scrollIntoView({ behavior: "smooth" }); });
 }
 
+/* ================= ОЛИМПИАДА ================= */
+/* темы олимпиадного пула, которые есть в этом классе и открыты */
+const olyPool = () => OLYMP_POOL.filter(t => G.topics.includes(t) && isOpen(t) && TASKS[t] && !TASKS[t].stub);
+const OLY_STEPS = [tx("Читаю", "Оқимын"), tx("Выписываю данные", "Деректі жазамын"), tx("Понимаю вопрос", "Сұрақты түсінемін"), tx("Составляю план", "Жоспар құрамын"), tx("Решаю по действиям", "Әрекетпен шешемін")];
+function olyBand() {
+  return el(`<section class="olyband"><div class="ob-l"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиадная подготовка", "Олимпиадаға дайындық")}</span>${L("«Бастау» · «Алтын сақа» · «Ақбота»", "«Бастау» · «Алтын сақа» · «Ақбота»")}</div>
+    <h2>${L("Контекстные задачи", "Контекстік есептер")} <span class="hand">${L("по порядку", "ретімен")}</span></h2>
+    <div class="obsteps">${OLY_STEPS.map((s, i) => `<span><b>${i + 1}</b>${T(s)}</span>`).join("<i>→</i>")}</div></div>
+    <div class="btns"><a class="btn y" href="#/olymp">${L("Открыть раздел", "Бөлімді ашу")} →</a></div></section>`);
+}
+function viewOlymp(v, [sub]) {
+  const pool = olyPool();
+  if (!pool.length || !OPEN_TOPICS().includes("ctx")) return lockedView(v, "ctx");
+  if (sub === "au") return olyAu(v, pool);
+  if (sub === "kokpar") return olyKokpar(v, pool);
+  v.append(el(`<section class="olyhero"><div class="eyebrow"><span class="tag">🏆 ${L("Олимпиада", "Олимпиада")}</span>${L(`${GRADE} класс · задачи в духе республиканских олимпиад`, `${GRADE} сынып · республикалық олимпиадалар үлгісіндегі есептер`)}</div>
+    <h2>${L("Готовимся к", "Олимпиадаға")} <span class="hand u">${L("олимпиадам", "дайындаламыз")}</span></h2>
+    <p class="lead">${L("Олимпиадная задача — это маленькая история. Побеждает не тот, кто быстрее считает, а тот, кто внимательно читает, видит лишние данные и решает по порядку.", "Олимпиадалық есеп — кішкентай оқиға. Тез санайтын емес, мұқият оқып, артық деректі көріп, ретімен шешетін жеңеді.")}</p>
+    <div class="obsteps big">${OLY_STEPS.map((s, i) => `<span><b>${i + 1}</b>${T(s)}</span>`).join("<i>→</i>")}</div></section>`));
+  v.append(el(`<section class="sec"><h3>${L("Учимся решать", "Шешуді үйренеміз")}</h3><div class="grid auto">${OLYMP_TOPICS.filter(t => G.topics.includes(t)).map(t => topicCard(t)).join("")}</div></section>`));
+  v.append(el(`<section class="sec"><h3>${L("Играем как на олимпиаде «Бастау»", "«Бастау» олимпиадасындағыдай ойнаймыз")}</h3><div class="grid g3 olymodes">
+    <a class="card omode" href="#/olymp/au"><div class="om-i">🎯</div><h3>«Әу, баста!»</h3><p>${L("3 темы × 6 задач стоимостью 10–60 баллов. Бонус за строку и за всю тему.", "3 тақырып × 6 есеп, құны 10–60 ұпай. Жол мен бүкіл тақырыпқа бонус.")}</p></a>
+    <a class="card omode" href="#/olymp/kokpar"><div class="om-i">🐎</div><h3>«Көкпар»</h3><p>${L("15 задач, на руках всегда 3. Две попытки. Верно подряд — цена растёт.", "15 есеп, қолда әрдайым 3. Екі әрекет. Қатарынан дұрыс — құны өседі.")}</p></a>
+    <a class="card omode" href="#/test/olymp"><div class="om-i">📝</div><h3>${L("Пробник", "Сынақ")}</h3><p>${L("Смешанная проверочная из олимпиадных тем — без подсказок, с разбором в конце.", "Олимпиадалық тақырыптардан аралас тексеру — кеңессіз, соңында талдау.")}</p></a></div>
+    <p class="mute" style="margin-top:10px">${L("Задания не копируют реальные олимпиады — они составлены по тем же типам задач. Устный тур «Байга» тренируем кнопкой «Разбор»: ребёнок рассказывает решение вслух по шагам.", "Тапсырмалар нақты олимпиаданы көшірмейді — сол есеп түрлері бойынша құрастырылған. Ауызша «Бәйге» турын «Талдау» батырмасымен жаттықтырамыз: бала шешімді қадамдап дауыстап айтады.")}</p></section>`));
+  v.append(el(`<section class="sec"><h3>${L("Олимпиады для начальной школы Казахстана", "Қазақстандағы бастауыш мектеп олимпиадалары")}</h3><div class="grid g2 olylist">${OLYMPIADS.map(o => `<div class="card flat"><b class="disp">${o.name}</b><div class="mute">${T(o.who)}</div><p>${T(o.what)}</p></div>`).join("")}</div></section>`));
+}
+const auLevel = c => (c <= 20 ? 1 : c <= 40 ? 2 : 3);
+function olyAu(v, pool) {
+  const R = new Rnd(newSeed());
+  const topics = ["ctx", ...R.shuffle(pool.filter(t => t !== "ctx")).slice(0, 2)];
+  const COSTS = [10, 20, 30, 40, 50, 60];
+  const cells = topics.map(t => COSTS.map(c => ({ t, c, seed: newSeed(), ok: null })));
+  const end = Date.now() + 120 * 60000;
+  const wrap = el(`<section><a class="back" href="#/olymp">← ${L("олимпиада", "олимпиада")}</a><div class="trhead"><h2>«Әу, баста!»</h2><div class="oscore disp"></div><div class="timer disp"></div></div>
+    <p class="mute">${L("Выбирай любую задачу. Ответ сдаётся один раз: верно — баллы задачи, неверно — 0. Бонус-строка: одна стоимость во всех трёх темах. Бонус-тема: все 6 задач темы (+50).", "Кез келген есепті таңда. Жауап бір рет беріледі: дұрыс — есеп ұпайы, қате — 0. Жол бонусы: үш тақырыптағы бір құн. Тақырып бонусы: тақырыптың 6 есебі (+50).")}</p>
+    <div class="oboard"></div><div class="host" style="margin-top:18px"></div></section>`);
+  v.append(wrap);
+  const score = () => {
+    let s = 0, bonus = 0;
+    cells.flat().forEach(x => { if (x.ok) s += x.c; });
+    COSTS.forEach((c, j) => { if (cells.every(r => r[j].ok)) bonus += c; });
+    cells.forEach(r => { if (r.every(x => x.ok)) bonus += 50; });
+    $(".oscore", wrap).innerHTML = `${s + bonus} <small>${L(`баллов${bonus ? ` (бонус ${bonus})` : ""}`, `ұпай${bonus ? ` (бонус ${bonus})` : ""}`)}</small>`;
+  };
+  const draw = () => {
+    $(".oboard", wrap).innerHTML = cells.map((r, i) => `<div class="orow"><div class="otopic" style="--dc:${DIRS[TASKS[r[0].t].dir].color}">${T(TASKS[r[0].t].title)}</div>${r.map((x, j) => `<button type="button" class="ocell ${x.ok === true ? "ok" : x.ok === false ? "no" : ""}" data-i="${i}" data-j="${j}" ${x.ok != null ? "disabled" : ""}>${x.c}</button>`).join("")}</div>`).join("");
+    score();
+  };
+  $(".oboard", wrap).addEventListener("click", e => {
+    const b = e.target.closest(".ocell"); if (!b || b.disabled) return;
+    const x = cells[+b.dataset.i][+b.dataset.j];
+    $$(".ocell", wrap).forEach(n => n.classList.toggle("cur", n === b));
+    playTask({ type: x.t, seed: x.seed, grade: GRADE, level: capLevel(x.t, auLevel(x.c)), mode: "test", host: $(".host", wrap), num: `${x.c}`,
+      onResult: r => { x.ok = r.ok; record(r, "olymp"); toast(r.ok ? tx(`Верно! +${x.c}`, `Дұрыс! +${x.c}`) : tx("Неверно — 0 баллов", "Қате — 0 ұпай")); },
+      onNext: () => { $(".host", wrap).innerHTML = ""; draw(); $(".oboard", wrap).scrollIntoView({ behavior: "smooth" }); } });
+    $(".host", wrap).scrollIntoView({ behavior: "smooth" });
+  });
+  const tm = setInterval(() => { const t = $(".timer", wrap); if (!t) return clearInterval(tm); const left = Math.max(0, end - Date.now()); t.textContent = `${Math.floor(left / 60000)}:${String(Math.floor((left % 60000) / 1000)).padStart(2, "0")}`; }, 1000);
+  draw();
+}
+function olyKokpar(v, pool) {
+  const R = new Rnd(newSeed());
+  const deck = range(15).map(k => ({ t: k % 3 === 0 ? "ctx" : R.pick(pool), seed: newSeed(), level: k < 5 ? 1 : k < 10 ? 2 : 3, tries: 0 }));
+  let next = 3, cost = 35, total = 0, solved = 0; const hand = deck.slice(0, 3);
+  const wrap = el(`<section><a class="back" href="#/olymp">← ${L("олимпиада", "олимпиада")}</a><div class="trhead"><h2>«Көкпар»</h2><div class="oscore disp"></div></div>
+    <p class="mute">${L("На руках 3 задачи. На каждую — 2 попытки. Верно — получаешь текущую цену, и следующая задача стоит на 1 балл дороже. Ошибка снижает цену, но не ниже 35. Задачу можно сбросить.", "Қолда 3 есеп. Әрқайсысына — 2 әрекет. Дұрыс — қазіргі құнды аласың, келесі есеп 1 ұпайға қымбат. Қате құнды төмендетеді, бірақ 35-тен төмен емес. Есепті тастауға болады.")}</p>
+    <div class="ohand"></div><div class="host" style="margin-top:18px"></div></section>`);
+  v.append(wrap);
+  const left = () => deck.length - next + hand.filter(Boolean).length;
+  const draw = () => {
+    $(".oscore", wrap).innerHTML = `${total} <small>${L(`баллов · цена задачи ${cost} · осталось ${left()}`, `ұпай · есеп құны ${cost} · қалды ${left()}`)}</small>`;
+    $(".ohand", wrap).innerHTML = hand.map((x, i) => x ? `<div class="card ocard"><div class="k">${L("Задача", "Есеп")} ${deck.indexOf(x) + 1} ${LEVEL_DOTS(x.level)}</div><b>${T(TASKS[x.t].title)}</b><div class="mute">${x.tries ? L("осталась 1 попытка", "1 әрекет қалды") : L("2 попытки", "2 әрекет")}</div><div class="btns"><button class="btn sm y" data-go="${i}" type="button">${L("Решать", "Шешу")}</button><button class="btn sm" data-drop="${i}" type="button">${L("Сбросить", "Тастау")}</button></div></div>` : "").join("") ||
+      `<div class="card done"><h3>${L(`Игра окончена: ${total} баллов`, `Ойын аяқталды: ${total} ұпай`)}</h3><p>${L(`Решено задач: ${solved} из 15.`, `Шешілген есеп: 15-тен ${solved}.`)}</p><div class="btns"><button class="btn y" type="button" onclick="location.reload()">${L("Ещё раз", "Тағы бір рет")}</button><a class="btn" href="#/olymp">${L("К олимпиаде", "Олимпиадаға")}</a></div></div>`;
+  };
+  const replace = i => { hand[i] = next < deck.length ? deck[next++] : null; };
+  const fail2 = i => { cost = Math.max(35, cost - 2); replace(i); };
+  $(".ohand", wrap).addEventListener("click", e => {
+    const go = e.target.closest("[data-go]"), drop = e.target.closest("[data-drop]");
+    if (drop) { fail2(+drop.dataset.drop); $(".host", wrap).innerHTML = ""; return draw(); }
+    if (!go) return; const i = +go.dataset.go, x = hand[i];
+    playTask({ type: x.t, seed: x.seed, grade: GRADE, level: capLevel(x.t, x.level), mode: "test", host: $(".host", wrap), num: `${cost}`,
+      onResult: r => {
+        record(r, "olymp"); x.tries++;
+        if (r.ok) { total += cost; cost++; solved++; replace(i); toast(tx("Верно! Цена следующей задачи +1", "Дұрыс! Келесі есептің құны +1")); }
+        else if (x.tries >= 2) { fail2(i); toast(tx("Вторая попытка неверна — 0 баллов", "Екінші әрекет қате — 0 ұпай")); }
+        else { cost = Math.max(35, cost - 1); toast(tx("Неверно. Есть ещё одна попытка", "Қате. Тағы бір әрекет бар")); }
+      },
+      onNext: () => { $(".host", wrap).innerHTML = ""; draw(); } });
+    $(".host", wrap).scrollIntoView({ behavior: "smooth" });
+  });
+  draw();
+}
+
 /* ================= МОИ РЕЗУЛЬТАТЫ ================= */
 function viewResults(v) {
   const d = PROG.load(); const name = store.get("name", "");
@@ -282,7 +379,7 @@ function viewResults(v) {
   v.append(el(`<section class="sec"><h3>${L("Задания для повторения", "Қайталауға арналған тапсырмалар")}</h3>${mist.length ? `<div class="btns" style="margin:10px 0"><a class="btn y" href="#/train/repeat">🔁 ${L("Повторить все подряд", "Барлығын қатарынан қайталау")}</a></div><div class="grid auto">${mist.slice(0, 12).map(m => `<a class="card mist" href="#/bank-replay/${m.type}/${m.level}/${m.seed}"><b>${T(TASKS[m.type].title)}</b> ${LEVEL_DOTS(m.level)}<small class="mute">${new Date(m.ts).toLocaleDateString()}</small></a>`).join("")}</div>` : `<p class="mute">${L("Ошибок нет — так держать!", "Қате жоқ — осылай жалғастыр!")}</p>`}</section>`));
   const rows = G.topics.map(t => { const s = PROG.topic(t); return `<div class="mrow"><span class="mt">${T(TASKS[t].title)}</span><span class="st st-${s.status}">${T(STATUS[s.status])}</span><span class="bar"><i style="width:${Math.round(s.acc * 100)}%"></i></span><span class="mute">${s.n ? `${s.ok}/${s.n}` : "—"}</span></div>`; }).join("");
   v.append(el(`<section class="sec"><h3>${L("Темы", "Тақырыптар")}</h3><div class="card mastery">${rows}</div><p class="mute" style="margin-top:8px">${L("Тема «освоена», если из последних 8 заданий не меньше 75% решено сразу или со второй попытки.", "Соңғы 8 тапсырманың кемінде 75%-ы бірден немесе екінші әрекеттен шешілсе, тақырып «меңгерілді».")}</p></section>`));
-  if (d.tests.length) v.append(el(`<section class="sec"><h3>${L("Проверочные работы", "Тексеру жұмыстары")}</h3><div class="card"><table class="ttab"><tr><th>${L("Дата", "Күні")}</th><th>${L("Тема", "Тақырып")}</th><th>${L("Результат", "Нәтиже")}</th><th>${L("Время", "Уақыт")}</th></tr>${d.tests.slice().reverse().map(x => `<tr><td>${new Date(x.ts).toLocaleString()}</td><td>${x.topic ? T(TASKS[x.topic].title) : L("смешанная", "аралас")}</td><td><b>${x.ok}/${x.n}</b></td><td>${Math.floor(x.time / 60)}:${String(x.time % 60).padStart(2, "0")}</td></tr>`).join("")}</table></div></section>`));
+  if (d.tests.length) v.append(el(`<section class="sec"><h3>${L("Проверочные работы", "Тексеру жұмыстары")}</h3><div class="card"><table class="ttab"><tr><th>${L("Дата", "Күні")}</th><th>${L("Тема", "Тақырып")}</th><th>${L("Результат", "Нәтиже")}</th><th>${L("Время", "Уақыт")}</th></tr>${d.tests.slice().reverse().map(x => `<tr><td>${new Date(x.ts).toLocaleString()}</td><td>${x.topic === "olymp" ? L("олимпиадный пробник", "олимпиадалық сынақ") : x.topic ? T(TASKS[x.topic].title) : L("смешанная", "аралас")}</td><td><b>${x.ok}/${x.n}</b></td><td>${Math.floor(x.time / 60)}:${String(x.time % 60).padStart(2, "0")}</td></tr>`).join("")}</table></div></section>`));
   const rb = el(`<section class="sec"><button class="btn sm dk" type="button">${L("Стереть мои результаты", "Нәтижелерімді өшіру")}</button></section>`);
   $("button", rb).onclick = () => { if (confirm(LANG.cur === "kz" ? "Барлық нәтижені өшіру керек пе?" : "Стереть все результаты этого класса?")) { PROG.save({ hist: [], tests: [] }); route(); } };
   v.append(rb);
