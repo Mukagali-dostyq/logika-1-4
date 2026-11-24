@@ -25,6 +25,7 @@ function setLang(l) {
   store.set("lang", LANG.cur);
 }
 function initLang() {
+  { const q = new URLSearchParams(location.search).get("lang"); if (q === "kz" || q === "ru") store.set("lang", q); }  /* ?lang=kz — ссылки со стендов/QR открываются по-казахски */
   setLang(store.get("lang", "ru"));
   document.addEventListener("click", e => { const b = e.target.closest(".lang-switch button"); if (b) setLang(b.dataset.l); });
 }
